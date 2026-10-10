@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN npm install -g @playwright/mcp@latest @playwright/cli@latest playwright@latest \
     && playwright-cli --help \
     && playwright install --with-deps chromium \
+    && npm cache clean --force \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # 预编译好的对应架构二进制（dist/amd64/artex 或 dist/arm64/artex）

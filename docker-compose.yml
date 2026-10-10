@@ -15,7 +15,8 @@ services:
     restart: unless-stopped
 
   artex:
-    image: autumn27/artex:${ARTEX_TAG:-latest}
+    # 镜像地址放在 .env 的 ARTEX_IMAGE 里（GHCR），方便换源不必改本文件。
+    image: ${ARTEX_IMAGE:-ghcr.io/ibelieve3212/artex}:${ARTEX_TAG:-latest}
     depends_on:
       postgres:
         condition: service_healthy
