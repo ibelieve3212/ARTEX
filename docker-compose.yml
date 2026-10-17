@@ -32,12 +32,10 @@ services:
       - "8787:8787"
       - "127.0.0.1:8788:8788"
     volumes:
-      # 把数据目录（含 jwt.key、SQLite 等）绑定到项目根目录的 data/，
-      # 方便在宿主机直接查看/备份，容器重建也不丢。
-      - ./data:/app/data
-      # 把项目根目录的 skills 挂进容器（覆盖镜像内置的 /app/skills）；
-      # 改 skill 无需重建镜像，容器读的就是宿主机这份。
-      - ./skills:/app/skills
+      # 单一挂载点：data/（任务、密钥）、skills/、cache/、tmp/、home/ 全部收敛在这里。
+      # 容器内所有可写路径都由镜像的 ENV 指到 /state（见 Dockerfile 与 docker-entrypoint.sh），
+      # 所以挂这一个目录就够了 —— 在宿主机直接查看/备份/迁移都只面对 ./state。
+      - ./state:/state
     restart: unless-stopped
 
 volumes:

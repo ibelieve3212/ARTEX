@@ -4,6 +4,29 @@
 
 ## [Unreleased]
 
+### 部署
+
+#### 新增的功能
+
+- 容器部署改为**单挂载点**：镜像内所有可写状态都收敛到挂载点 `/state`（`HOME`、
+  `XDG_CACHE_HOME`、`PIP_CACHE_DIR`、`npm_config_cache`、`TMPDIR`、data 目录、
+  skills 目录、`jwt.key`），运行时只需 `-v 宿主目录:/state`，容器可写层保持接近 0
+  （可用 `docker diff <容器>` 验证）。新增容器入口 `docker-entrypoint.sh` 负责补建目录、
+  播种内置技能、把 `jwt.key` 软链到挂载点。裸机 zip 部署不受影响（仍用 `start.sh`）。
+- 镜像预装 `hashcat` 与 `pocl-opencl-icd`（CPU OpenCL 运行时）——agent 原先在任务里反复
+  自己 `apt install` 这套，每次约 600MB 且装完活不过一次容器重建。
+- 新增内置技能 `runtime-env`（默认对 auto / pentest / worker 可见）：约束 agent 不要在
+  任务里 `apt install` / 全局 `pip install`，缺工具先报告；Python、Node 依赖装进任务工作区
+  （venv / 本地 `node_modules`）。
+
+#### 修复的问题
+
+- `Dockerfile` 用 `COPY --chmod=755` 取代 `COPY` + `RUN chmod`：原先会让 39MB 的二进制在
+  镜像里存两份（压缩后也多 13.6MB）。
+- `Dockerfile` 显式设置 `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`：`HOME` 收进挂载点后，
+  Playwright 仍能命中镜像内置浏览器，不会重新下载 680MB。
+- 移除 `VOLUME ["/app/data"]`，不再产生多余的匿名卷。
+
 ## [0.3.15] - 2026-10-07
 
 ### 拦截

@@ -89,11 +89,27 @@ cd ARTEX
 git clone https://github.com/Autumn-27/ARTEX.git
 cd ARTEX
 cp .env.example .env          # 填 POSTGRES_PASSWORD、可选 ANTHROPIC_API_KEY
-docker compose up -d          # 拉取 autumn27/artex 镜像 + postgres
+docker compose up -d          # 拉取 ghcr.io/ibelieve3212/artex 镜像 + postgres
 # → http://localhost:8787
 ```
 
-镜像已含常用工具（ripgrep/curl/vim/npm/nmap…）；`./skills` 与 `./data` 以绑定挂载持久化。
+镜像已含常用工具（ripgrep / curl / vim / nmap / hashcat / Node 20 / Playwright + Chromium…，见 `Dockerfile`）。
+
+**单挂载点**：容器内所有可写状态（任务数据、技能、登录密钥、各类缓存）都收敛在 `/state`，
+因此只需挂一个目录 `./state:/state`：`state/data` 任务与数据、`state/skills` 技能、
+`state/jwt.key` 登录密钥、`state/cache` + `state/tmp` + `state/home` 缓存与用户态文件。
+备份、迁移、清理都只面对这一个目录；容器可写层保持接近 0（`docker diff <容器>` 可见）。
+
+不用 Compose、直接 `docker run` 的等价写法（`-v` 换成你的实际路径）：
+
+```bash
+docker run -d --name artex -p 8787:8787 -p 127.0.0.1:8788:8788 \
+  -e ARTEX_PG_DSN='postgres://artex:<密码>@<PG主机>:5432/artex?sslmode=disable' \
+  -v /path/to/state:/state \
+  --restart unless-stopped ghcr.io/ibelieve3212/artex:latest
+```
+
+`-data`（数据目录）、`-addr` / `-proxy` 都由镜像入口脚本与 CMD 设好，无需手写。
 
 远程 MCP 可在系统设置中选择 `http`（Streamable HTTP）或 `sse`（旧版 SSE）。
 旧版 SSE 服务通常使用 `GET /sse` 建立事件流，再通过服务返回的
@@ -144,7 +160,7 @@ ARTEX_TARGETS=linux/amd64,windows/amd64 ./build.sh --release
 
 ## 更新升级
 
-> 升级只换程序、不动数据：Postgres 数据卷 `pgdata`、`./data`（jwt.key / SQLite 等）、`./skills` 都会保留。**数据库迁移无需手动执行**——`artex` 每次启动会幂等重跑 `schema.sql`（含 `ADD COLUMN` / `CREATE INDEX IF NOT EXISTS`），即“重启即迁移”。升级前仍建议先备份 `./data` 与数据库。
+> 升级只换程序、不动数据：Postgres 数据卷 `pgdata` 与 `./state`（`data` 任务、`skills` 技能、`jwt.key` 密钥、`cache` 缓存）都会保留。**数据库迁移无需手动执行**——`artex` 每次启动会幂等重跑 `schema.sql`（含 `ADD COLUMN` / `CREATE INDEX IF NOT EXISTS`），即“重启即迁移”。升级前仍建议先备份 `./state` 与数据库。
 
 ### 方式一：页面一键更新（推荐）
 
@@ -156,7 +172,7 @@ ARTEX_TARGETS=linux/amd64,windows/amd64 ./build.sh --release
 - **随时可回退**：上一版本保留为 `artex.old`，卡片上有「回滚到上一版本」。注意数据库结构不会回退。
 - **更新会中断正在运行的任务**——更新即重启，请在空闲时进行。
 - **开发构建不给更新**：版本号是 `dev` 或 `git describe` 带后缀时禁用，避免正式版覆盖掉本地调试的二进制。
-- **Docker 下只换程序、不换镜像**：镜像里的 playwright / nmap 等工具链不会跟着升级，且 `docker compose up -d` 重建容器后会退回镜像自带的版本。要连镜像一起升级仍请用 `docker compose pull artex && docker compose up -d artex`。
+- **Docker 下请用“换镜像”升级**：容器里换装出的新二进制只活在容器可写层，`docker rm` 或 `compose up -d` 重建容器后就会退回镜像自带的版本；镜像里的 Playwright / nmap / hashcat 等工具链也只有换镜像才会更新。所以容器部署请走 `docker pull` + 重建容器（见下方「方式三」）。
 - 访问 GitHub 需要代理时，在同一页面配置**全局代理**即可，更新链路会走它。更新只从 GitHub 域名下载并强制 HTTPS。
 
 ### 方式二：一键更新脚本
