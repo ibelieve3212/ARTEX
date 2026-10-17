@@ -13,12 +13,12 @@
   skills 目录、`jwt.key`），运行时只需 `-v 宿主目录:/state`，容器可写层保持接近 0
   （可用 `docker diff <容器>` 验证）。新增容器入口 `docker-entrypoint.sh` 负责补建目录、
   播种内置技能、把 `jwt.key` 软链到挂载点。裸机 zip 部署不受影响（仍用 `start.sh`）。
-- 镜像预装 `hashcat` 与 CPU OpenCL 运行时（`pocl-opencl-icd` + `ocl-icd-libopencl1` 加载器，
-  两者缺一 hashcat 会报 “No OpenCL installation found”）——agent 原先在任务里反复
-  自己 `apt install` 这套，每次约 600MB 且装完活不过一次容器重建。
-- 新增内置技能 `runtime-env`（默认对 auto / pentest / worker 可见）：约束 agent 不要在
+- 新增内置技能 `runtime-env`（默认对 auto / pentest / worker / planner 可见）：约束 agent 不要在
   任务里 `apt install` / 全局 `pip install`，缺工具先报告；Python、Node 依赖装进任务工作区
-  （venv / 本地 `node_modules`）。
+  （venv / 本地 `node_modules`）。镜像**刻意不预装**爆破/破解类工具（hashcat、hydra 等）：
+  与本项目「禁止口令爆破 / 字典破解」的纪律一致，预装等于给它开绿灯（试行一版后已回退：
+  除了这个原因，CPU OpenCL 运行时 pocl + libllvm15 + libclang 还要多占 430MB 镜像，
+  而它在 1～2GB 内存的机器上因可分配显存不足而跑不动大字典）。
 
 #### 修复的问题
 

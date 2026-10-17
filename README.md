@@ -93,7 +93,8 @@ docker compose up -d          # 拉取 ghcr.io/ibelieve3212/artex 镜像 + postg
 # → http://localhost:8787
 ```
 
-镜像已含常用工具（ripgrep / curl / vim / nmap / hashcat / Node 20 / Playwright + Chromium…，见 `Dockerfile`）。
+镜像已含常用工具（ripgrep / curl / vim / nmap / Node 20 / Playwright + Chromium…，见 `Dockerfile`）。
+注意：镜像**刻意不装**爆破/破解类工具（hashcat 等），与「凭据靠找不靠猜」的纪律一致。
 
 **单挂载点**：容器内所有可写状态（任务数据、技能、登录密钥、各类缓存）都收敛在 `/state`，
 因此只需挂一个目录 `./state:/state`：`state/data` 任务与数据、`state/skills` 技能、
@@ -172,7 +173,7 @@ ARTEX_TARGETS=linux/amd64,windows/amd64 ./build.sh --release
 - **随时可回退**：上一版本保留为 `artex.old`，卡片上有「回滚到上一版本」。注意数据库结构不会回退。
 - **更新会中断正在运行的任务**——更新即重启，请在空闲时进行。
 - **开发构建不给更新**：版本号是 `dev` 或 `git describe` 带后缀时禁用，避免正式版覆盖掉本地调试的二进制。
-- **Docker 下请用“换镜像”升级**：容器里换装出的新二进制只活在容器可写层，`docker rm` 或 `compose up -d` 重建容器后就会退回镜像自带的版本；镜像里的 Playwright / nmap / hashcat 等工具链也只有换镜像才会更新。所以容器部署请走 `docker pull` + 重建容器（见下方「方式三」）。
+- **Docker 下请用“换镜像”升级**：容器里换装出的新二进制只活在容器可写层，`docker rm` 或 `compose up -d` 重建容器后就会退回镜像自带的版本；镜像里的 Playwright / nmap 等工具链也只有换镜像才会更新。所以容器部署请走 `docker pull` + 重建容器（见下方「方式三」）。
 - 访问 GitHub 需要代理时，在同一页面配置**全局代理**即可，更新链路会走它。更新只从 GitHub 域名下载并强制 HTTPS。
 
 ### 方式二：一键更新脚本
