@@ -22,7 +22,11 @@ description: 在本环境里安装或使用外部工具、依赖之前调用（a
 - **浏览器**：`playwright` / `playwright-cli` + chromium + ffmpeg，装在
   `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`。**不要再跑 `playwright install`** ——
   浏览器已在镜像里，重装只是浪费几分钟（若真缺某内核如 firefox，先报告）。
-- **hashcat**（含 CPU OpenCL 运行时 pocl），可直接跑
+- **hashcat**：可直接跑，带 CPU OpenCL 运行时（pocl）。设备情况用 `hashcat -I` 看；
+  跑之前先看**内存**：本类环境内存往往只有 1～2GB，pocl 的可分配显存会很小，
+  大字典攻击会报 `Not enough allocatable device memory`。遇到就降并行度
+  （如 `-n 1 -u 1 --force`）或用更小的字典；仍然不行就别在这台机器上硬氪，
+  换个思路（离线知识、已泄露凭据、其他路径）更划算。
 - **nmap、whois、dig/nslookup、ping、nc、telnet、curl、wget、jq、unzip、git、rg(ripgrep)、vim**
 - **Python 3.12**、**Node 20**
 

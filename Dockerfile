@@ -17,12 +17,15 @@ FROM python:3.12-slim-bookworm
 ARG TARGETARCH
 # 常用工具：ripgrep / curl / vim，加一批 recon 常备件（按需增删）。
 # Node 从 NodeSource 装 20.x：bookworm 自带的 apt nodejs 是 18，Playwright 要求 >=20。
-# hashcat + pocl-opencl-icd：agent 在任务里反复 apt 安装的那套（含 CPU OpenCL 运行时）。
+# hashcat + pocl-opencl-icd + ocl-icd-libopencl1：agent 在任务里反复 apt 安装的那套
+# （hashcat + CPU OpenCL 运行时）。两个 OpenCL 包都不能省：pocl 只提供 ICD 厂商配置，
+# 真正加载它的 libOpenCL.so.1 在 ocl-icd-libopencl1 里，而 --no-install-recommends 不会
+# 自动带上它 —— 少了它 hashcat 会报 "No OpenCL installation found"。
 # 预装进镜像可省掉每次约 600MB 的安装量和十来分钟等待。
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates ripgrep curl wget vim git jq unzip \
       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap \
-      hashcat pocl-opencl-icd \
+      hashcat pocl-opencl-icd ocl-icd-libopencl1 \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
