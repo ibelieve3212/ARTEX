@@ -43,7 +43,7 @@ RUN npm install -g @playwright/mcp@latest @playwright/cli@latest playwright@late
 # ── 可写状态收敛到 /state ────────────────────────────────────────────────────
 # 容器里会"往外写"的路径全部改指到 /state，运行时只需挂这一个目录：
 #   HOME             ~/.ssh、~/.gitconfig、~/.npmrc 等用户态文件
-#   XDG_CACHE_HOME   一切遵循 XDG 的缓存（uv/pocl/hashcat/pip…）
+#   XDG_CACHE_HOME   一切遵循 XDG 的缓存（uv/pip/npm/playwright…）
 #   PIP_CACHE_DIR    pip 下载缓存（原来会在可写层里长到几百 MB）
 #   npm_config_cache npm 缓存（npm 不认 XDG，必须单列）
 #   PYTHONUSERBASE   pip install --user 的落点
